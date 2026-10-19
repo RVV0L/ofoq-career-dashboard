@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Bell, BellOff, Moon, Sun, Lock, Globe } from 'lucide-react';
+import { Bell, BellOff, Moon, Sun, Lock, Globe, LogIn, LogOut } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import SyncBadge from '@/components/auth/SyncBadge';
 import { useData } from '@/context/DataContext';
 import { motion } from 'framer-motion';
 import { useMode } from '@/context/ModeContext';
@@ -31,6 +33,7 @@ function NotifyToggle() {
 
 export default function Header() {
   const { isPrivate, toggleMode } = useMode();
+  const { isOwner, cloud, openLogin, signOut } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   return (
@@ -41,34 +44,48 @@ export default function Header() {
         </h1>
 
         <div className="flex items-center gap-2">
-          {/* زر التبديل الرئيسي: Private / Public */}
-          <button
-            onClick={toggleMode}
-            aria-label="تبديل الوضع"
-            className="relative flex items-center rounded-full bg-slate-100 p-1 text-xs font-medium dark:bg-slate-800"
-          >
-            {[
-              { key: true, label: 'Private', Icon: Lock },
-              { key: false, label: 'Public', Icon: Globe },
-            ].map(({ key, label, Icon }) => {
-              const active = isPrivate === key;
-              return (
-                <span key={label} className="relative z-10 flex items-center gap-1.5 px-3 py-1.5">
-                  {active && (
-                    <motion.span
-                      layoutId="mode-pill"
-                      className="absolute inset-0 -z-10 rounded-full bg-brand-600"
-                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <Icon size={14} className={active ? 'text-white' : 'text-slate-500'} />
-                  <span className={active ? 'text-white' : 'text-slate-500'}>{label}</span>
-                </span>
-              );
-            })}
-          </button>
+          {/* زر التبديل الرئيسي: Private / Public (للمالك فقط) */}
+          {isOwner && (
+            <button
+              onClick={toggleMode}
+              aria-label="تبديل الوضع"
+              className="relative flex items-center rounded-full bg-slate-100 p-1 text-xs font-medium dark:bg-slate-800"
+            >
+              {[
+                { key: true, label: 'Private', Icon: Lock },
+                { key: false, label: 'Public', Icon: Globe },
+              ].map(({ key, label, Icon }) => {
+                const active = isPrivate === key;
+                return (
+                  <span key={label} className="relative z-10 flex items-center gap-1.5 px-3 py-1.5">
+                    {active && (
+                      <motion.span
+                        layoutId="mode-pill"
+                        className="absolute inset-0 -z-10 rounded-full bg-brand-600"
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <Icon size={14} className={active ? 'text-white' : 'text-slate-500'} />
+                    <span className={active ? 'text-white' : 'text-slate-500'}>{label}</span>
+                  </span>
+                );
+              })}
+            </button>
+          )}
 
+          {isOwner && <SyncBadge />}
           {isPrivate && <NotifyToggle />}
+
+          {cloud && !isOwner && (
+            <button onClick={openLogin} className="btn-ghost gap-1.5 !px-2.5 text-xs" aria-label="تسجيل دخول المالك">
+              <LogIn size={16} /> <span className="hidden sm:inline">دخول</span>
+            </button>
+          )}
+          {cloud && isOwner && (
+            <button onClick={signOut} className="btn-ghost !px-2.5" aria-label="تسجيل الخروج" title="تسجيل الخروج">
+              <LogOut size={18} />
+            </button>
+          )}
 
           <button onClick={toggleTheme} aria-label="تبديل الثيم" className="btn-ghost !px-2.5">
             {isDark ? <Sun size={18} /> : <Moon size={18} />}

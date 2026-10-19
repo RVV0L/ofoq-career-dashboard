@@ -1,17 +1,25 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { storage } from '@/services/storage';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { initialData } from '@/data/initialData';
+import { initialData as ownerSeed } from '@/data/initialData';
 import { uid } from '@/lib/utils';
 import { isLegacy, normalizeApp } from '@/lib/pipeline';
+import { useAuth } from '@/context/AuthContext';
 
 const DataContext = createContext(null);
+
+// الزائر لا يرى بياناتك التجريبية: مجموعات فارغة (والمحتوى العام يأتي من السحابة)
+const emptySeed = Object.fromEntries(
+  Object.entries(ownerSeed).map(([k, v]) => [k, Array.isArray(v) ? [] : v])
+);
 
 /**
  * مصدر البيانات الوحيد. كل مجموعة تُحفظ في localStorage عبر services/storage،
  * والدوال addItem / updateItem / removeItem تعمل على أي مجموعة بالاسم.
  */
 export function DataProvider({ children }) {
+  const { isOwner } = useAuth();
+  const initialData = isOwner ? ownerSeed : emptySeed;
   const [courses, setCourses] = useLocalStorage('courses', initialData.courses);
   const [sprints, setSprints] = useLocalStorage('sprints', initialData.sprints);
   const [skills, setSkills] = useLocalStorage('skills', initialData.skills);
@@ -40,19 +48,23 @@ export function DataProvider({ children }) {
   );
 
   // ترحيل لمرة واحدة: مجموعات المهارات القديمة (عربية) -> المجموعات الأربع الجديدة
+  // (لا يغيّر القائمة ولا يكتب شيئاً إن لم يوجد ما يُرحَّل، حتى لا يُرفع شيء للسحابة عبثاً)
   useEffect(() => {
-    if (storage.get('migrated:skillGroups')) return;
+    if (!isOwner || storage.get('migrated:skillGroups')) return;
     storage.set('migrated:skillGroups', true);
-    setSkills((list) =>
-      list.map((k) => {
-        if (k.group === 'الشبكات والأمن السيبراني')
-          return { ...k, group: /kali|wireshark|nmap|security/i.test(k.name) ? 'Tools & Security' : 'Networking/CCNA' };
-        if (k.group === 'البرمجة وقواعد البيانات')
-          return { ...k, group: /react|html|css|tailwind|vue|javascript/i.test(k.name) ? 'Frontend' : 'Backend' };
-        return k;
-      })
-    );
-  }, [setSkills]);
+    setSkills((list) => {
+      let changed = false;
+      const out = list.map((k) => {
+        let group = k.group;
+        if (group === 'الشبكات والأمن السيبراني') group = /kali|wireshark|nmap|security/i.test(k.name) ? 'Tools & Security' : 'Networking/CCNA';
+        else if (group === 'البرمجة وقواعد البيانات') group = /react|html|css|tailwind|vue|javascript/i.test(k.name) ? 'Frontend' : 'Backend';
+        if (group === k.group) return k;
+        changed = true;
+        return { ...k, group };
+      });
+      return changed ? out : list;
+    });
+  }, [isOwner, setSkills]);
 
   const addItem = useCallback((key, item) => setters[key]((l) => [...l, { ...item, id: uid() }]), [setters]);
   const updateItem = useCallback((key, id, patch) => setters[key]((l) => l.map((x) => (x.id === id ? { ...x, ...patch } : x))), [setters]);

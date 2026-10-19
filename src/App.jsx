@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LayoutDashboard, GraduationCap, Briefcase, ClipboardList } from 'lucide-react';
 import { useMode } from '@/context/ModeContext';
+import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import LoginModal from '@/components/auth/LoginModal';
 import { useReminderNotifications } from '@/hooks/useReminderNotifications';
 import Header from '@/components/layout/Header';
 import Sidebar from '@/components/layout/Sidebar';
@@ -23,21 +26,25 @@ export const PAGES = [
 
 export default function App() {
   const { isPublic } = useMode();
+  const { isOwner } = useAuth();
   useReminderNotifications();
   const [page, setPage] = useState('dashboard');
 
-  const visiblePages = PAGES.filter((p) => !(isPublic && p.privateOnly));
+  // غير المالك (أو الوضع العام) لا يرى أي صفحة privateOnly
+  const visiblePages = PAGES.filter((p) => !((isPublic || !isOwner) && p.privateOnly));
 
   // إذا اختفت الصفحة الحالية عند التحويل للوضع العام، ننتقل لأول صفحة متاحة
   useEffect(() => {
     if (!visiblePages.some((p) => p.id === page)) setPage(visiblePages[0].id);
-  }, [isPublic]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isPublic, isOwner]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const Current = (visiblePages.find((p) => p.id === page) ?? visiblePages[0]).component;
+  const active = visiblePages.find((p) => p.id === page) ?? visiblePages[0];
+  const Current = active.component;
 
   return (
     <div className="min-h-screen">
       <Header />
+      <LoginModal />
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
         <Sidebar pages={visiblePages} current={page} onNavigate={setPage} />
         <main className="min-w-0 flex-1">
@@ -49,7 +56,9 @@ export default function App() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              <Current />
+              <ProtectedRoute privateOnly={active.privateOnly}>
+                <Current />
+              </ProtectedRoute>
             </motion.div>
           </AnimatePresence>
         </main>

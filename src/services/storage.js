@@ -1,39 +1,35 @@
 /**
  * طبقة التخزين (Storage Adapter)
  * -------------------------------------------------
- * كل التطبيق يتعامل مع هذه الواجهة فقط: get / set / remove.
- * لاحقاً عند الربط بـ Firebase أو Supabase يكفي استبدال
- * كائن `localAdapter` بـ adapter جديد بنفس الدوال (وجعلها async عند الحاجة)
- * دون لمس باقي المكوّنات.
+ * الواجهة التي يستخدمها التطبيق: get / set / remove / subscribe.
+ * - بدون إعداد Supabase: تخزين محلي فقط (localStorage).
+ * - مع الإعداد: localStorage + مزامنة سحابية حية (انظر services/sync.js).
  */
-const PREFIX = 'cd:';
+import { supabase } from './supabase';
+import { createSync } from './sync';
 
-const localAdapter = {
-  get(key) {
-    try {
-      const raw = localStorage.getItem(PREFIX + key);
-      return raw === null ? undefined : JSON.parse(raw);
-    } catch {
-      return undefined;
-    }
+// localStorage قد يرمي استثناء (وضع خاص / ممتلئ): نرجع لذاكرة مؤقتة
+const mem = new Map();
+const ls = {
+  getItem(k) {
+    try { return localStorage.getItem(k); } catch { return mem.has(k) ? mem.get(k) : null; }
   },
-  set(key, value) {
-    try {
-      localStorage.setItem(PREFIX + key, JSON.stringify(value));
-    } catch {
-      /* التخزين ممتلئ أو معطّل */
-    }
+  setItem(k, v) {
+    try { localStorage.setItem(k, v); } catch { mem.set(k, v); }
   },
-  remove(key) {
-    try {
-      localStorage.removeItem(PREFIX + key);
-    } catch {
-      /* تجاهل */
-    }
+  removeItem(k) {
+    try { localStorage.removeItem(k); } catch { mem.delete(k); }
+    mem.delete(k);
   },
 };
 
-// مثال مستقبلي:
-// const supabaseAdapter = { async get(key) {...}, async set(key, value) {...} };
+export const sync = createSync({ client: supabase, ls });
 
-export const storage = localAdapter;
+export const storage = {
+  get: sync.get,
+  set: sync.set,
+  remove: sync.remove,
+  subscribe: sync.subscribe,
+  onStatus: sync.onStatus,
+  getStatus: sync.getStatus,
+};
