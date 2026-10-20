@@ -24,7 +24,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_ENABLE_GOOGLE: ${{ vars.VITE_ENABLE_GOOGLE }}
+         VITE_ENABLE_GOOGLE: ${{ secrets.VITE_ENABLE_GOOGLE }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
