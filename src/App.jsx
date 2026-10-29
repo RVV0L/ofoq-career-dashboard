@@ -13,10 +13,6 @@ import Academic from '@/pages/Academic';
 import Career from '@/pages/Career';
 import Prep from '@/pages/Prep';
 
-/**
- * تعريف الصفحات. privateOnly = تختفي في الوضع العام.
- * (الوضع العام يعرض فقط: المهارات، المشاريع، الشهادات.)
- */
 export const PAGES = [
   { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, component: Dashboard, privateOnly: true },
   { id: 'academic', label: 'المسار الأكاديمي', icon: GraduationCap, component: Academic, privateOnly: true },
@@ -30,31 +26,36 @@ export default function App() {
   useReminderNotifications();
   const [page, setPage] = useState('dashboard');
 
-  // غير المالك (أو الوضع العام) لا يرى أي صفحة privateOnly
   const visiblePages = PAGES.filter((p) => !((isPublic || !isOwner) && p.privateOnly));
 
-  // إذا اختفت الصفحة الحالية عند التحويل للوضع العام، ننتقل لأول صفحة متاحة
   useEffect(() => {
     if (!visiblePages.some((p) => p.id === page)) setPage(visiblePages[0].id);
   }, [isPublic, isOwner]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const active = visiblePages.find((p) => p.id === page) ?? visiblePages[0];
   const Current = active.component;
+  const showNavigation = visiblePages.length > 1;
 
   return (
     <div className="min-h-screen">
       <Header />
       <LoginModal />
-      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
-        <Sidebar pages={visiblePages} current={page} onNavigate={setPage} />
-        <main className="min-w-0 flex-1">
+      <div
+        className={`mx-auto flex max-w-7xl gap-6 px-4 pt-5 ${
+          showNavigation ? 'pb-24 md:py-6' : 'pb-10 md:py-8'
+        }`}
+      >
+        {showNavigation && (
+          <Sidebar pages={visiblePages} current={page} onNavigate={setPage} />
+        )}
+        <main id="main-content" className="min-w-0 flex-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={`${isPublic ? 'public' : 'private'}-${page}`}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             >
               <ProtectedRoute privateOnly={active.privateOnly}>
                 <Current />

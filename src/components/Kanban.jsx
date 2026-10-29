@@ -5,7 +5,6 @@ import { SPRINT_COLUMNS, sprintFields } from '@/data/schemas';
 import EntityModal from '@/components/ui/EntityModal';
 import { EditButton } from '@/components/ui/Controls';
 
-/** لوحة Kanban: سحب وإفلات (سطح المكتب) أو أزرار النقل (الجوال). */
 export default function Kanban() {
   const { sprints, updateItem } = useData();
   const [modal, setModal] = useState(null);
@@ -41,14 +40,15 @@ export default function Kanban() {
             >
               <div className="mb-2 flex items-center justify-between">
                 <span className="ltr-text text-sm font-semibold">
-                  {col.label} <span className="text-slate-400">({items.length})</span>
+                  {col.label} <span className="text-slate-400 tabular-nums">({items.length})</span>
                 </span>
                 <button
+                  type="button"
                   onClick={() => setModal({ defaults: { column: col.value } })}
                   aria-label={`إضافة مهمة إلى ${col.label}`}
                   className="btn-ghost !p-1.5"
                 >
-                  <Plus size={16} />
+                  <Plus size={16} aria-hidden="true" />
                 </button>
               </div>
 
@@ -61,17 +61,19 @@ export default function Kanban() {
                     onDragEnd={() => { setDragId(null); setOverCol(null); }}
                     className="cursor-grab rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm active:cursor-grabbing dark:border-slate-700 dark:bg-slate-800"
                   >
-                    <p className={s.column === 'done' ? 'text-slate-400 line-through' : ''}>{s.title}</p>
+                    <p className={`break-words ${s.column === 'done' ? 'text-slate-400 line-through' : ''}`}>
+                      {s.title}
+                    </p>
                     <div className="mt-2 flex items-center justify-between">
                       <div className="flex gap-1">
                         {s.column !== 'todo' && (
-                          <button onClick={() => move(s, -1)} aria-label="نقل للخلف" title="نقل للخلف" className="btn-ghost !p-1">
-                            <ArrowRight size={14} />
+                          <button type="button" onClick={() => move(s, -1)} aria-label="نقل للخلف" title="نقل للخلف" className="btn-ghost !p-1">
+                            <ArrowRight size={14} aria-hidden="true" />
                           </button>
                         )}
                         {s.column !== 'done' && (
-                          <button onClick={() => move(s, 1)} aria-label="نقل للأمام" title="نقل للأمام" className="btn-ghost !p-1">
-                            <ArrowLeft size={14} />
+                          <button type="button" onClick={() => move(s, 1)} aria-label="نقل للأمام" title="نقل للأمام" className="btn-ghost !p-1">
+                            <ArrowLeft size={14} aria-hidden="true" />
                           </button>
                         )}
                       </div>

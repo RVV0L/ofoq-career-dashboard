@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Paperclip, Trash2 } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { CV_FIELDS, labelOf } from '@/data/schemas';
 import { isSubmitted, appLabel } from '@/lib/pipeline';
@@ -61,7 +61,6 @@ function CvModal({ item, onClose }) {
   );
 }
 
-/** نسخ CV لكل مجال + تتبع أي نسخة أُرسلت لأي شركة */
 export default function CvTab() {
   const { cvs, applications, updateItem } = useData();
   const [modal, setModal] = useState(null);
@@ -76,8 +75,8 @@ export default function CvTab() {
           {cvs.map((c) => (
             <article key={c.id} className="card animate-fade-up">
               <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold">{c.name}</h3>
+                <div className="min-w-0">
+                  <h3 className="truncate font-semibold">{c.name}</h3>
                   <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                     <Badge tone={FIELD_TONE[c.field]}>{labelOf(CV_FIELDS, c.field)}</Badge>
                     {c.updatedAt && <span className="tabular-nums">آخر تحديث {c.updatedAt}</span>}
@@ -86,7 +85,16 @@ export default function CvTab() {
                 <EditButton onClick={() => setModal({ item: c })} />
               </div>
               {c.notes && <p className="mt-2 text-sm text-slate-500">{c.notes}</p>}
-              <p className="mt-2 text-xs">{c.files?.length ? <span className="text-emerald-600">📎 <bdi dir="ltr">{c.files[0].name}</bdi></span> : <span className="text-amber-600">لم يُرفع ملف لهذه النسخة بعد</span>}</p>
+              <p className="mt-2.5 text-xs">
+                {c.files?.length ? (
+                  <span className="inline-flex items-center gap-1.5 font-medium text-emerald-600 dark:text-emerald-400">
+                    <Paperclip size={13} className="shrink-0" aria-hidden="true" />
+                    <bdi dir="ltr" className="truncate">{c.files[0].name}</bdi>
+                  </span>
+                ) : (
+                  <span className="text-amber-600 dark:text-amber-400">لم يُرفع ملف لهذه النسخة بعد</span>
+                )}
+              </p>
               <div className="mt-3 border-t border-slate-100 pt-2 dark:border-slate-800">
                 <p className="mb-1 text-xs text-slate-400">أُرسلت إلى:</p>
                 {sentTo(c.id).length === 0 ? <span className="text-xs text-slate-400">— لا أحد بعد</span> : (

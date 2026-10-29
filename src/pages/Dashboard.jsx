@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, BookOpenCheck, Briefcase, FolderCheck, Network, Rocket } from 'lucide-react';
+import { ArrowLeft, Award, BookOpenCheck, Briefcase, FolderCheck, Network, Rocket } from 'lucide-react';
 import { useData } from '@/context/DataContext';
 import { useStats } from '@/hooks/useStats';
 import { appLabel, isSubmitted, stageIndex } from '@/lib/pipeline';
@@ -21,7 +21,7 @@ function Kpi({ icon: Icon, title, value, hint, manual, onEdit, children }) {
         <p className="card-title">{title}</p>
         <div className="-mt-1 -ms-1 flex items-center gap-1">
           {manual && <Badge tone="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">يدوي</Badge>}
-          <Icon size={18} className="text-brand-500" />
+          <Icon size={18} className="text-brand-500 shrink-0" aria-hidden="true" />
           {onEdit && <EditButton onClick={onEdit} />}
         </div>
       </div>
@@ -37,7 +37,6 @@ export default function Dashboard() {
   const { settings, updateSettings, skills, updateItem, addItem, applications, projects } = useData();
   const [editing, setEditing] = useState(null);
 
-  // CCNA: مصدرها مهارة باسم CCNA (مصدر واحد للحقيقة مع صفحة المهارات)
   const ccna = skills.find((k) => /ccna/i.test(k.name));
   const ccnaLevel = ccna?.level ?? 0;
 
@@ -69,7 +68,6 @@ export default function Dashboard() {
     },
   };
   const f = editing && editing !== 'weights' && forms[editing];
-
 
   const pipeline = [...applications].sort((a, b) => stageIndex(b.status) - stageIndex(a.status));
 
@@ -103,11 +101,11 @@ export default function Dashboard() {
           {pipeline.length === 0 ? <Empty>لا توجد شركات مستهدفة بعد.</Empty> : (
             <ul className="divide-y divide-slate-100 text-sm dark:divide-slate-800">
               {pipeline.slice(0, 7).map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-3 py-2">
-                  <span className="font-medium">{a.company}</span>
-                  <span className="flex items-center gap-2">
+                <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="min-w-0 truncate font-medium"><bdi>{a.company}</bdi></span>
+                  <span className="flex shrink-0 items-center gap-2">
                     <ReminderChip app={a} />
-                    <span aria-hidden>➔</span>
+                    <ArrowLeft size={14} className="text-slate-400 shrink-0" aria-hidden="true" />
                     <Badge tone={appTone(a)}>{appLabel(a)}</Badge>
                   </span>
                 </li>
@@ -118,7 +116,7 @@ export default function Dashboard() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-500 dark:text-slate-400">Active Sprints</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300 tracking-tight">Active Sprints</h2>
         <Kanban />
       </section>
 
